@@ -1,0 +1,22 @@
+{
+  "name": "@catharsis-network/vesting",
+  "description": "Vesting token contract",
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.0.2",
+    "@nomiclabs/hardhat-waffle": "^2.0.1",
+    "chai": "^4.3.4",
+    "ethereum-waffle": "^3.4.0",
+    "ethers": "^5.3.1",
+    "hardhat": "^2.4.1"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.1.0"
+  },
+  "scripts": {
+    "build": "npx hardhat compile",
+    "serve": "npx hardhat node",
+    "test": "npx hardhat test",
+    "dist": "npx hardhat flatten ./contracts/xxx.sol > ./flat/xxx.Full.sol"
+  },
+  "license": "MIT"
+}
