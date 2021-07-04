@@ -31,7 +31,7 @@ contract Vesting is Ownable {
         Lock[] locks;
     }
 
-    mapping (address => Balance) private balances;
+    mapping (address => Balance) private _balances;
 
     event TokensVested(address indexed _to, uint256 _amount);
     event TokensClaimed(address indexed _beneficiary, uint256 _amount);
@@ -49,12 +49,13 @@ contract Vesting is Ownable {
             uint256[] memory unlocks
         )
     {
-        Lock memory _lock = balances[_participant].locks[_index];
-        return (_lock.amounts, _lock.unlockAt);
+        Lock memory _lock = _balances[_participant].locks[_index];
+        amounts = _lock.amounts;
+        unlocks = _lock.unlockAt;
     }
 
     function getLocksLength(address _participant) public view returns (uint256) {
-        return balances[_participant].locks.length;
+        return _balances[_participant].locks.length;
     }
 
     function getItemsLengthByLockIndex(address _participant, uint256 _lockIndex)
@@ -62,9 +63,9 @@ contract Vesting is Ownable {
         view
         returns (uint256)
     {
-        require(balances[_participant].locks.length > _lockIndex, "Index not exist");
+        require(_balances[_participant].locks.length > _lockIndex, "Index not exist");
 
-        return balances[_participant].locks[_lockIndex].amounts.length;
+        return _balances[_participant].locks[_lockIndex].amounts.length;
     }
 
     function lock(address _account, uint256[] memory _unlockAt, uint256[] memory _amounts)
@@ -94,7 +95,7 @@ contract Vesting is Ownable {
         // Will fail if the allowance is less than _totalAmount
         IERC20(token).safeTransferFrom(msg.sender, address(this), totalAmount);
 
-        balances[_account].locks.push(Lock({
+        _balances[_account].locks.push(Lock({
             amounts: _amounts,
             unlockAt: _unlockAt,
             released: 0
@@ -143,7 +144,7 @@ contract Vesting is Ownable {
 
         i = 0;
         for (i; i < inputsLen; i++) {
-            balances[_input[i].account].locks.push(Lock({
+            _balances[_input[i].account].locks.push(Lock({
                 amounts: _input[i].amounts,
                 unlockAt: _input[i].unlockAt,
                 released: 0
@@ -152,7 +153,7 @@ contract Vesting is Ownable {
     }
 
     function getNextUnlock(address _participant) public view returns (uint256 timestamp) {
-        uint256 locksLen = balances[_participant].locks.length;
+        uint256 locksLen = _balances[_participant].locks.length;
         uint currentUnlock;
         uint i;
         for (i; i < locksLen; i++) {
@@ -170,7 +171,7 @@ contract Vesting is Ownable {
     }
 
     function getNextUnlockByIndex(address _participant, uint256 _lockIndex) public view returns (uint256 timestamp) {
-        uint256 locksLen = balances[_participant].locks.length;
+        uint256 locksLen = _balances[_participant].locks.length;
 
         require(locksLen > _lockIndex, "Index not exist");
 
@@ -178,7 +179,7 @@ contract Vesting is Ownable {
     }
 
     function pendingReward(address _participant) external view returns (uint256 reward) {
-        reward = _pendingReward(_participant, 0, balances[_participant].locks.length);
+        reward = _pendingReward(_participant, 0, _balances[_participant].locks.length);
     }
 
     function pendingRewardInRange(address _participant, uint256 _from, uint256 _to)
@@ -190,7 +191,7 @@ contract Vesting is Ownable {
     }
 
     function claim(address _participant) external returns (uint256 claimed) {
-        claimed = _claim(_participant, 0, balances[_participant].locks.length);
+        claimed = _claim(_participant, 0, _balances[_participant].locks.length);
     }
 
     function claimInRange(address _participant, uint256 _from, uint256 _to)
@@ -210,14 +211,14 @@ contract Vesting is Ownable {
         uint i = _from;
         uint ii;
         for (i; i < _to; i++) {
-            uint len = balances[_participant].locks[i].amounts.length;
+            uint len = _balances[_participant].locks[i].amounts.length;
             for (ii; ii < len; ii++) {
-                if (block.timestamp >= balances[_participant].locks[i].unlockAt[ii]) {
-                    amount += balances[_participant].locks[i].amounts[ii];
+                if (block.timestamp >= _balances[_participant].locks[i].unlockAt[ii]) {
+                    amount += _balances[_participant].locks[i].amounts[ii];
                 }
             }
 
-            released += balances[_participant].locks[i].released;
+            released += _balances[_participant].locks[i].released;
             ii = 0;
         }
 
@@ -236,17 +237,17 @@ contract Vesting is Ownable {
         uint ii;
         for (i; i < _to; i++) {
             uint toRelease;
-            uint len = balances[_participant].locks[i].amounts.length;
+            uint len = _balances[_participant].locks[i].amounts.length;
             for (ii; ii < len; ii++) {
-                if (block.timestamp >= balances[_participant].locks[i].unlockAt[ii]) {
-                    amount += balances[_participant].locks[i].amounts[ii];
-                    toRelease += balances[_participant].locks[i].amounts[ii];
+                if (block.timestamp >= _balances[_participant].locks[i].unlockAt[ii]) {
+                    amount += _balances[_participant].locks[i].amounts[ii];
+                    toRelease += _balances[_participant].locks[i].amounts[ii];
                 }
             }
 
-            released += balances[_participant].locks[i].released;
-            if (toRelease > 0 && balances[_participant].locks[i].released < toRelease) {
-                balances[_participant].locks[i].released = toRelease;
+            released += _balances[_participant].locks[i].released;
+            if (toRelease > 0 && _balances[_participant].locks[i].released < toRelease) {
+                _balances[_participant].locks[i].released = toRelease;
             }
 
             ii = 0;
@@ -263,7 +264,7 @@ contract Vesting is Ownable {
     }
 
     function _getNextUnlock(address _participant, uint256 _lockIndex) internal view returns (uint256 timestamp) {
-        Lock memory _lock = balances[_participant].locks[_lockIndex];
+        Lock memory _lock = _balances[_participant].locks[_lockIndex];
         uint256 lockLen = _lock.unlockAt.length;
         uint i;
         for (i; i < lockLen; i++) {
