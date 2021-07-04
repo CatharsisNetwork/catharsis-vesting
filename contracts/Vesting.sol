@@ -148,18 +148,30 @@ contract Vesting is Ownable {
         }
     }
 
-    function getNextUnlock(address _participant, uint256 _lockIndex) public view returns (uint256) {
+    function getNextUnlock(address _participant) public view returns (uint256 timestamp) {
+        uint256 locksLen = balances[_participant].locks.length;
+        uint currentUnlock;
+        uint i;
+        for (i; i < locksLen; i++) {
+            currentUnlock = _getNextUnlock(_participant, i);
+            if (currentUnlock != 0) {
+                if (timestamp == 0) {
+                    timestamp = currentUnlock;
+                } else {
+                    if (currentUnlock < timestamp) {
+                        timestamp = currentUnlock;
+                    }
+                }
+            }
+        }
+    }
+
+    function getNextUnlockByIndex(address _participant, uint256 _lockIndex) public view returns (uint256) {
         uint256 locksLen = balances[_participant].locks.length;
 
         require(locksLen > _lockIndex, "Index not exist");
 
-        Lock memory _lock = balances[_participant].locks[_lockIndex];
-
-        for (uint i = 0; i < locksLen; i++) {
-            if (block.timestamp < _lock.unlockAt[i]) {
-                return _lock.unlockAt[i];
-            }
-        }
+        return _getNextUnlock(_participant, _lockIndex);
     }
 
     function pendingReward(address _participant) external view returns (uint256 reward) {
@@ -245,5 +257,16 @@ contract Vesting is Ownable {
 
         IERC20(token).safeTransfer(_participant, claimed);
         emit TokensClaimed(_participant, claimed);
+    }
+
+    function _getNextUnlock(address _participant, uint256 _lockIndex) internal view returns (uint256) {
+        Lock memory _lock = balances[_participant].locks[_lockIndex];
+        uint256 lockLen = _lock.unlockAt.length;
+        uint i;
+        for (i; i < lockLen; i++) {
+            if (block.timestamp < _lock.unlockAt[i]) {
+                return _lock.unlockAt[i];
+            }
+        }
     }
 }

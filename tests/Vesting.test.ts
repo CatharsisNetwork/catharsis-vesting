@@ -68,7 +68,7 @@ describe("Vesting", function () {
             assert.equal(amounts[0], 1000, 'Wrong amount')
             assert.equal(unlocks[0], lockDate, 'Wrong unlock')
 
-            let nextUnlock = await vesting.getNextUnlock(BENEFICIARY, 0);
+            let nextUnlock = await vesting.getNextUnlockByIndex(BENEFICIARY, 0);
 
             assert.equal(nextUnlock, lockDate, 'Wrong next unlock')
 
@@ -145,13 +145,13 @@ describe("Vesting", function () {
 
             await vesting.lockBatch(locks)
 
-            let nextUnlock = await vesting.getNextUnlock(BENEFICIARY_2.getAddress(), 0);
+            let nextUnlock = await vesting.getNextUnlockByIndex(BENEFICIARY_2.getAddress(), 0);
             assert.equal(nextUnlock, dateNow + 1000, 'Wrong next unlock')
 
-            nextUnlock = await vesting.getNextUnlock(BENEFICIARY_2.getAddress(), 1);
+            nextUnlock = await vesting.getNextUnlockByIndex(BENEFICIARY_2.getAddress(), 1);
             assert.equal(nextUnlock, dateNow + 500, 'Wrong next unlock')
 
-            nextUnlock = await vesting.getNextUnlock(BENEFICIARY_4.getAddress(), 0);
+            nextUnlock = await vesting.getNextUnlockByIndex(BENEFICIARY_4.getAddress(), 0);
             assert.equal(nextUnlock, 0, 'Wrong next unlock')
 
             let pendingReward = await vesting.pendingReward(BENEFICIARY_2.getAddress());
