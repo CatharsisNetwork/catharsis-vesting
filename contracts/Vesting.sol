@@ -230,8 +230,8 @@ contract Vesting is Ownable {
             }
 
             released += balances[_participant].locks[i].released;
-            if (toRelease > 0) {
-                balances[_participant].locks[i].released += toRelease;
+            if (toRelease > 0 && balances[_participant].locks[i].released < toRelease) {
+                balances[_participant].locks[i].released = toRelease;
             }
 
             ii = 0;
