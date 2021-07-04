@@ -240,9 +240,10 @@ contract Vesting is Ownable {
         require(amount >= released, "Nothing to claim");
 
         claimed = amount - released;
-        if (claimed > 0) {
-            IERC20(token).safeTransfer(_participant, claimed);
-            emit TokensClaimed(_participant, claimed);
-        }
+
+        require(claimed > 0, "Zero claim");
+
+        IERC20(token).safeTransfer(_participant, claimed);
+        emit TokensClaimed(_participant, claimed);
     }
 }
