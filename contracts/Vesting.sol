@@ -92,8 +92,6 @@ contract Vesting is Ownable, ReentrancyGuard {
             totalAmount += _amounts[i];
         }
 
-        // transfer funds from the msg.sender
-        // Will fail if the allowance is less than _totalAmount
         IERC20(token).safeTransferFrom(msg.sender, address(this), totalAmount);
 
         _balances[_account].locks.push(Lock({
@@ -139,8 +137,6 @@ contract Vesting is Ownable, ReentrancyGuard {
             ii = 0;
         }
 
-        // transfer funds from the msg.sender
-        // Will fail if the allowance is less than _totalAmount
         IERC20(token).safeTransferFrom(msg.sender, address(this), totalAmount);
 
         i = 0;
