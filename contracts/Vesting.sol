@@ -83,6 +83,10 @@ contract Vesting is Ownable, ReentrancyGuard {
         require(_unlockAt.length != 0, "Zero array length");
 
         for (uint i = 0; i < _unlockAt.length; i++) {
+            if (i == 0) {
+                require(_unlockAt[0] >= startAt, "Early unlock");
+            }
+
             if (i > 0) {
                 if (_unlockAt[i-1] >= _unlockAt[i]) {
                     require(false, "Timeline violation");
@@ -123,6 +127,10 @@ contract Vesting is Ownable, ReentrancyGuard {
                     require(false, "Wrong array length");
                 } else if (_input[i].unlockAt.length == 0) {
                     require(false, "Zero array length");
+                }
+
+                if (ii == 0) {
+                    require(_input[i].unlockAt[0] >= startAt, "Early unlock");
                 }
 
                 if (ii > 0) {
