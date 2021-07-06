@@ -3,8 +3,9 @@ pragma solidity ^0.8.4;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract Vesting is Ownable {
+contract Vesting is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     uint256 public constant MAX_LOCK_LENGTH = 100;
@@ -170,7 +171,11 @@ contract Vesting is Ownable {
         }
     }
 
-    function getNextUnlockByIndex(address _participant, uint256 _lockIndex) public view returns (uint256 timestamp) {
+    function getNextUnlockByIndex(address _participant, uint256 _lockIndex)
+        public
+        view
+        returns (uint256 timestamp)
+    {
         uint256 locksLen = _balances[_participant].locks.length;
 
         require(locksLen > _lockIndex, "Index not exist");
@@ -190,12 +195,13 @@ contract Vesting is Ownable {
         reward = _pendingReward(_participant, _from, _to);
     }
 
-    function claim(address _participant) external returns (uint256 claimed) {
+    function claim(address _participant) external nonReentrant returns (uint256 claimed) {
         claimed = _claim(_participant, 0, _balances[_participant].locks.length);
     }
 
     function claimInRange(address _participant, uint256 _from, uint256 _to)
         external
+        nonReentrant
         returns (uint256 claimed)
     {
         claimed = _claim(_participant, _from, _to);
@@ -263,7 +269,11 @@ contract Vesting is Ownable {
         emit TokensClaimed(_participant, claimed);
     }
 
-    function _getNextUnlock(address _participant, uint256 _lockIndex) internal view returns (uint256 timestamp) {
+    function _getNextUnlock(address _participant, uint256 _lockIndex)
+        internal
+        view
+        returns (uint256 timestamp)
+    {
         Lock memory _lock = _balances[_participant].locks[_lockIndex];
         uint256 lockLen = _lock.unlockAt.length;
         uint i;
