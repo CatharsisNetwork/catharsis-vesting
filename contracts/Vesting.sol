@@ -96,7 +96,7 @@ contract Vesting is Ownable, ReentrancyGuard {
             totalAmount += _amounts[i];
         }
 
-        IERC20(token).safeTransferFrom(msg.sender, address(this), totalAmount);
+        token.safeTransferFrom(msg.sender, address(this), totalAmount);
 
         _balances[_account].locks.push(Lock({
             amounts: _amounts,
@@ -145,7 +145,7 @@ contract Vesting is Ownable, ReentrancyGuard {
             ii = 0;
         }
 
-        IERC20(token).safeTransferFrom(msg.sender, address(this), totalAmount);
+        token.safeTransferFrom(msg.sender, address(this), totalAmount);
 
         i = 0;
         for (i; i < inputsLen; i++) {
@@ -269,7 +269,7 @@ contract Vesting is Ownable, ReentrancyGuard {
 
         require(claimed > 0, "Zero claim");
 
-        IERC20(token).safeTransfer(_participant, claimed);
+        token.safeTransfer(_participant, claimed);
         emit TokensClaimed(_participant, claimed);
     }
 
