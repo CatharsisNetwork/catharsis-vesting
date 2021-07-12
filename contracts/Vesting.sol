@@ -5,6 +5,11 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
+/**
+ * @title Vesting contract with batch lock and claim possibility,
+ *      support only target token, user can claim and get actual
+ *      reward data in range dependant on selected lock index.
+ */
 contract Vesting is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
@@ -42,6 +47,9 @@ contract Vesting is Ownable, ReentrancyGuard {
         startAt = _startAt;
     }
 
+    /**
+     * @dev Returns {_participant} vesting plan by {_index}.
+     */
     function getLocks(address _participant, uint _index)
         public
         view
@@ -55,10 +63,16 @@ contract Vesting is Ownable, ReentrancyGuard {
         unlocks = _lock.unlockAt;
     }
 
+    /**
+     * @dev Returns amount of vesting plans by {_participant} address.
+     */
     function getLocksLength(address _participant) public view returns (uint256) {
         return _balances[_participant].locks.length;
     }
 
+    /**
+     * @dev Returns vesting plan {_lockIndex} length by {_participant} address.
+     */
     function getItemsLengthByLockIndex(address _participant, uint256 _lockIndex)
         external
         view
@@ -69,6 +83,9 @@ contract Vesting is Ownable, ReentrancyGuard {
         return _balances[_participant].locks[_lockIndex].amounts.length;
     }
 
+    /**
+     * @dev Locking {_amounts} with {_unlockAt} date for specific {_account}.
+     */
     function lock(address _account, uint256[] memory _unlockAt, uint256[] memory _amounts)
         external
         onlyOwner
@@ -105,6 +122,10 @@ contract Vesting is Ownable, ReentrancyGuard {
         }));
     }
 
+
+    /**
+     * @dev Same as {Vesting.lock}, but in the batches.
+     */
     function lockBatch(LockBatchInput[] memory _input)
         external
         onlyOwner
@@ -157,6 +178,10 @@ contract Vesting is Ownable, ReentrancyGuard {
         }
     }
 
+    /**
+     * @dev Returns next unlock timestamp by all locks, if return zero,
+     *      no time points available.
+     */
     function getNextUnlock(address _participant) public view returns (uint256 timestamp) {
         uint256 locksLen = _balances[_participant].locks.length;
         uint currentUnlock;
@@ -175,6 +200,9 @@ contract Vesting is Ownable, ReentrancyGuard {
         }
     }
 
+    /**
+     * @dev Returns next unlock timestamp by {_lockIndex}.
+     */
     function getNextUnlockByIndex(address _participant, uint256 _lockIndex)
         public
         view
@@ -187,10 +215,16 @@ contract Vesting is Ownable, ReentrancyGuard {
         timestamp = _getNextUnlock(_participant, _lockIndex);
     }
 
+    /**
+     * @dev Returns total pending reward by {_participant} address.
+     */
     function pendingReward(address _participant) external view returns (uint256 reward) {
         reward = _pendingReward(_participant, 0, _balances[_participant].locks.length);
     }
 
+    /**
+     * @dev Returns pending reward by {_participant} address in range.
+     */
     function pendingRewardInRange(address _participant, uint256 _from, uint256 _to)
         external
         view
@@ -199,10 +233,16 @@ contract Vesting is Ownable, ReentrancyGuard {
         reward = _pendingReward(_participant, _from, _to);
     }
 
+    /**
+     * @dev Claim available reward.
+     */
     function claim(address _participant) external nonReentrant returns (uint256 claimed) {
         claimed = _claim(_participant, 0, _balances[_participant].locks.length);
     }
 
+    /**
+     * @dev Claim available reward in range.
+     */
     function claimInRange(address _participant, uint256 _from, uint256 _to)
         external
         nonReentrant
