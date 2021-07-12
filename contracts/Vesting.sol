@@ -18,9 +18,6 @@ contract Vesting is Ownable, ReentrancyGuard {
     IERC20 public token;
     uint256 public startAt;
 
-    uint256 public totalLocked;
-    uint256 public totalReleased;
-
     struct LockBatchInput {
         address account;
         uint256[] unlockAt;
