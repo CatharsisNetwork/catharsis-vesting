@@ -133,24 +133,33 @@ contract Vesting is Ownable, ReentrancyGuard {
         returns (uint256 totalAmount)
     {
         uint256 inputsLen = _input.length;
-        uint256 lockLen;
 
+        require(inputsLen != 0, "Empty input data");
+
+        uint256 lockLen;
         uint i;
         uint ii;
         for (i; i < inputsLen; i++) {
+            if (_input[i].account == address(0)) {
+                require(false, "Zero address");
+            }
+
+            if (
+                _input[i].amounts.length == 0 ||
+                _input[i].unlockAt.length == 0
+            ) {
+                require(false, "Zero array length");
+            }
+
+            if (
+                _input[i].unlockAt.length != _input[i].amounts.length ||
+                _input[i].unlockAt.length > MAX_LOCK_LENGTH
+            ) {
+                require(false, "Wrong array length");
+            }
+
             lockLen = _input[i].unlockAt.length;
             for (ii; ii < lockLen; ii++) {
-                if (_input[i].account == address(0)) {
-                    require(false, "Zero address");
-                } else if (
-                    _input[i].unlockAt.length != _input[i].amounts.length ||
-                    _input[i].unlockAt.length > MAX_LOCK_LENGTH
-                ) {
-                    require(false, "Wrong array length");
-                } else if (_input[i].unlockAt.length == 0) {
-                    require(false, "Zero array length");
-                }
-
                 if (ii == 0) {
                     require(_input[i].unlockAt[0] >= startAt, "Early unlock");
                 }
