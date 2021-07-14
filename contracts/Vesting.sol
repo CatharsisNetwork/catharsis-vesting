@@ -50,7 +50,7 @@ contract Vesting is Ownable, ReentrancyGuard {
      * @dev Returns {_participant} vesting plan by {_index}.
      */
     function getLocks(address _participant, uint _index)
-        public
+        external
         view
         returns (
             uint256[] memory amounts,
@@ -65,7 +65,7 @@ contract Vesting is Ownable, ReentrancyGuard {
     /**
      * @dev Returns amount of vesting plans by {_participant} address.
      */
-    function getLocksLength(address _participant) public view returns (uint256) {
+    function getLocksLength(address _participant) external view returns (uint256) {
         return _balances[_participant].locks.length;
     }
 
@@ -181,7 +181,7 @@ contract Vesting is Ownable, ReentrancyGuard {
      * @dev Returns next unlock timestamp by all locks, if return zero,
      *      no time points available.
      */
-    function getNextUnlock(address _participant) public view returns (uint256 timestamp) {
+    function getNextUnlock(address _participant) external view returns (uint256 timestamp) {
         uint256 locksLen = _balances[_participant].locks.length;
         uint currentUnlock;
         uint i;
@@ -203,7 +203,7 @@ contract Vesting is Ownable, ReentrancyGuard {
      * @dev Returns next unlock timestamp by {_lockIndex}.
      */
     function getNextUnlockByIndex(address _participant, uint256 _lockIndex)
-        public
+        external
         view
         returns (uint256 timestamp)
     {
