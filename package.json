@@ -25,7 +25,7 @@
     "build": "npx hardhat compile",
     "serve": "npx hardhat node",
     "test": "npx hardhat test",
-    "dist": "npx hardhat flatten ./contracts/xxx.sol > ./flat/xxx.Full.sol"
+    "dist": "npx hardhat flatten ./contracts/Vesting.sol > ./flat/Vesting.Full.sol"
   },
   "license": "MIT"
 }
