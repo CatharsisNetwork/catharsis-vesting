@@ -5,6 +5,11 @@ import { ethers } from "hardhat";
 import { Signer } from "ethers";
 import { assert, expect } from "chai";
 import { solidity } from "ethereum-waffle";
+
+const {
+    expectRevert, // Assertions for transactions that should fail
+} = require('@openzeppelin/test-helpers');
+
 import * as times from './time'
 
 chai.use(solidity);
@@ -115,7 +120,7 @@ describe("Vesting", function () {
                 {
                     account: BENEFICIARY_2.getAddress(),
                     unlockAt: [
-                        dateNow - 500,
+                        dateNow,
                     ],
                     amounts: [
                         500,
@@ -135,7 +140,7 @@ describe("Vesting", function () {
                 {
                     account: BENEFICIARY_4.getAddress(),
                     unlockAt: [
-                        dateNow - 1500
+                        dateNow
                     ],
                     amounts: [
                         500
@@ -174,7 +179,7 @@ describe("Vesting", function () {
                 {
                     account: BENEFICIARY,
                     unlockAt: [
-                        dateNow - 500,
+                        dateNow,
                     ],
                     amounts: [
                         500,
@@ -208,7 +213,166 @@ describe("Vesting", function () {
             let balanceOfBeneficiary = await token.balanceOf(BENEFICIARY)
             assert.equal(balanceOfBeneficiary.toNumber(), 500, 'Wrong balance')
 
+            // await vesting.connect(BENEFICIARY_SIGNER).claim(BENEFICIARY)
+        });
+    })
+
+    describe("Bed user behavior", function () {
+
+        beforeEach('success vesting call',async function () {
+            const ERC20Mock = await ethers.getContractFactory("ERC20Mock");
+            const Vesting = await ethers.getContractFactory("Vesting");
+
+            token = await ERC20Mock.deploy('Mock Erc20 token', 'MOCK');
+            vesting = await Vesting.deploy(token.address, getDateNow());
+
+            const MINTER_ROLE = await token.MINTER_ROLE();
+            await token.grantRole(MINTER_ROLE, OWNER)
+        })
+
+        it("should fail if pass wrong data batch from owner", async function () {
+            await token.mint(OWNER, 10000)
+            await token.approve(vesting.address, 10000)
+
+            let dateNow = getDateNow()
+
+            let BENEFICIARY_2 = accounts[3]
+
+            let locks: Array<any> = [
+                {
+                    account: BENEFICIARY_2.getAddress(),
+                    unlockAt: [
+                        dateNow + 2000
+                    ],
+                    amounts: [
+                        1500,
+                        2500
+                    ]
+                }
+            ]
+
+            await expectRevert(
+                vesting.lockBatch(locks),
+                'Wrong array length'
+            )
+
+            locks = [
+                {
+                    account: BENEFICIARY_2.getAddress(),
+                    unlockAt: [
+                        dateNow + 2000,
+                        dateNow + 1000
+                    ],
+                    amounts: [
+                        1500,
+                        2500
+                    ]
+                }
+            ]
+
+            await expectRevert(
+                vesting.lockBatch(locks),
+                'Timeline violation'
+            )
+
+            locks = [
+                {
+                    account: BENEFICIARY_2.getAddress(),
+                    unlockAt: [
+                        dateNow - 2000,
+                        dateNow + 1000
+                    ],
+                    amounts: [
+                        1500,
+                        2500
+                    ]
+                }
+            ]
+
+            await expectRevert(
+                vesting.lockBatch(locks),
+                'Early unlock'
+            )
+
+            let { AddressZero } = ethers.constants
+            locks = [
+                {
+                    account: AddressZero,
+                    unlockAt: [
+                        dateNow - 2000,
+                        dateNow + 1000
+                    ],
+                    amounts: [
+                        1500,
+                        2500
+                    ]
+                }
+            ]
+
+            await expectRevert(
+                vesting.lockBatch(locks),
+                'Zero address'
+            )
+
+            locks = [
+                {
+                    account: BENEFICIARY_2.getAddress(),
+                    unlockAt: [],
+                    amounts: []
+                }
+            ]
+
+            await expectRevert(
+                vesting.lockBatch(locks),
+                'Zero array length'
+            )
+        });
+
+        it("should fail claim if claimed and available zero from beneficiary", async function () {
+            await token.mint(OWNER, 10000)
+            await token.approve(vesting.address, 10000)
+
+            let dateNow = getDateNow()
+
+            let locks: Array<any> = [
+                {
+                    account: BENEFICIARY,
+                    unlockAt: [
+                        dateNow,
+                    ],
+                    amounts: [
+                        500,
+                    ]
+                },
+                {
+                    account: BENEFICIARY,
+                    unlockAt: [
+                        dateNow + 500,
+                        dateNow + 1000
+                    ],
+                    amounts: [
+                        1500,
+                        2500
+                    ]
+                },
+                {
+                    account: BENEFICIARY,
+                    unlockAt: [
+                        dateNow + 1500,
+                    ],
+                    amounts: [
+                        3000,
+                    ]
+                }
+            ]
+
+            await vesting.lockBatch(locks)
             await vesting.connect(BENEFICIARY_SIGNER).claim(BENEFICIARY)
+
+            await expectRevert(
+                vesting.connect(BENEFICIARY_SIGNER).claim(BENEFICIARY),
+                'Zero claim'
+            )
         });
     })
 })
