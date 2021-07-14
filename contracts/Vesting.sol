@@ -119,6 +119,8 @@ contract Vesting is Ownable, ReentrancyGuard {
             unlockAt: _unlockAt,
             released: 0
         }));
+
+        emit TokensVested(_account, totalAmount);
     }
 
 
@@ -167,6 +169,9 @@ contract Vesting is Ownable, ReentrancyGuard {
 
         token.safeTransferFrom(msg.sender, address(this), totalAmount);
 
+        uint amount;
+        uint l;
+
         i = 0;
         for (i; i < inputsLen; i++) {
             _balances[_input[i].account].locks.push(Lock({
@@ -174,6 +179,20 @@ contract Vesting is Ownable, ReentrancyGuard {
                 unlockAt: _input[i].unlockAt,
                 released: 0
             }));
+
+            l = _input[i].amounts.length;
+            ii = 0;
+            if (l > 1) {
+                for (ii; ii < l; ii++) {
+                    amount += _input[i].amounts[ii];
+                    if (ii == l - ii) {
+                        emit TokensVested(_input[i].account, amount);
+                        amount = 0;
+                    }
+                }
+            } else {
+                emit TokensVested(_input[i].account, _input[i].amounts[0]);
+            }
         }
     }
 
