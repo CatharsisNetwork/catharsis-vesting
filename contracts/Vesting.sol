@@ -17,8 +17,8 @@ contract Vesting is Ownable, ReentrancyGuard {
 
     uint256 public constant MAX_LOCK_LENGTH = 100;
 
-    IERC20 public token;
-    uint256 public startAt;
+    IERC20 public immutable token;
+    uint256 public immutable startAt;
 
     struct LockBatchInput {
         address account;
