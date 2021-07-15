@@ -194,7 +194,7 @@ contract Vesting is Ownable, ReentrancyGuard {
             if (l > 1) {
                 for (ii; ii < l; ii++) {
                     amount += _input[i].amounts[ii];
-                    if (ii == l - ii) {
+                    if (ii == l - 1) {
                         emit TokensVested(_input[i].account, amount);
                         amount = 0;
                     }
