@@ -6,13 +6,14 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "./IVesting.sol";
 
 /**
  * @title Vesting contract with batch lock and claim possibility,
  *      support only target token, user can claim and get actual
  *      reward data in range dependant on selected lock index.
  */
-contract Vesting is Ownable, ReentrancyGuard {
+contract Vesting is IVesting, Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     uint256 public constant MAX_LOCK_LENGTH = 100;
@@ -52,6 +53,7 @@ contract Vesting is Ownable, ReentrancyGuard {
     function getLocks(address _participant, uint _index)
         external
         view
+        override
         returns (
             uint256[] memory amounts,
             uint256[] memory unlocks
@@ -65,7 +67,7 @@ contract Vesting is Ownable, ReentrancyGuard {
     /**
      * @dev Returns amount of vesting plans by {_participant} address.
      */
-    function getLocksLength(address _participant) external view returns (uint256) {
+    function getLocksLength(address _participant) external view override returns (uint256) {
         return _balances[_participant].locks.length;
     }
 
@@ -75,6 +77,7 @@ contract Vesting is Ownable, ReentrancyGuard {
     function getItemsLengthByLockIndex(address _participant, uint256 _lockIndex)
         external
         view
+        override
         returns (uint256)
     {
         require(_balances[_participant].locks.length > _lockIndex, "Index not exist");
@@ -87,6 +90,7 @@ contract Vesting is Ownable, ReentrancyGuard {
      */
     function lock(address _account, uint256[] memory _unlockAt, uint256[] memory _amounts)
         external
+        override
         onlyOwner
         returns (uint256 totalAmount)
     {
@@ -209,7 +213,12 @@ contract Vesting is Ownable, ReentrancyGuard {
      * @dev Returns next unlock timestamp by all locks, if return zero,
      *      no time points available.
      */
-    function getNextUnlock(address _participant) external view returns (uint256 timestamp) {
+    function getNextUnlock(address _participant)
+        external
+        view
+        override
+        returns (uint256 timestamp)
+    {
         uint256 locksLen = _balances[_participant].locks.length;
         uint currentUnlock;
         uint i;
@@ -233,6 +242,7 @@ contract Vesting is Ownable, ReentrancyGuard {
     function getNextUnlockByIndex(address _participant, uint256 _lockIndex)
         external
         view
+        override
         returns (uint256 timestamp)
     {
         uint256 locksLen = _balances[_participant].locks.length;
@@ -245,7 +255,7 @@ contract Vesting is Ownable, ReentrancyGuard {
     /**
      * @dev Returns total pending reward by {_participant} address.
      */
-    function pendingReward(address _participant) external view returns (uint256 reward) {
+    function pendingReward(address _participant) external view override returns (uint256 reward) {
         reward = _pendingReward(_participant, 0, _balances[_participant].locks.length);
     }
 
@@ -255,6 +265,7 @@ contract Vesting is Ownable, ReentrancyGuard {
     function pendingRewardInRange(address _participant, uint256 _from, uint256 _to)
         external
         view
+        override
         returns (uint256 reward)
     {
         reward = _pendingReward(_participant, _from, _to);
@@ -263,7 +274,7 @@ contract Vesting is Ownable, ReentrancyGuard {
     /**
      * @dev Claim available reward.
      */
-    function claim(address _participant) external nonReentrant returns (uint256 claimed) {
+    function claim(address _participant) external override nonReentrant returns (uint256 claimed) {
         claimed = _claim(_participant, 0, _balances[_participant].locks.length);
     }
 
@@ -272,6 +283,7 @@ contract Vesting is Ownable, ReentrancyGuard {
      */
     function claimInRange(address _participant, uint256 _from, uint256 _to)
         external
+        override
         nonReentrant
         returns (uint256 claimed)
     {
