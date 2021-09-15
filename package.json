@@ -15,17 +15,20 @@
     "hardhat": "^2.4.1",
     "ts-node": "^9.1.1",
     "typescript": "^4.2.2",
-    "web3": "^1.3.4"
+    "web3": "^1.3.4",
+    "prettier": "^2.3.2",
+    "prettier-plugin-solidity": "^1.0.0-beta.15",
+    "bn.js": "^5.2.0"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^4.1.0",
-    "bn.js": "^5.2.0"
+    "@openzeppelin/contracts": "^4.1.0"
   },
   "scripts": {
     "build": "npx hardhat compile",
     "serve": "npx hardhat node",
     "test": "npx hardhat test",
-    "dist": "npx hardhat flatten ./contracts/Vesting.sol > ./flat/Vesting.Full.sol"
+    "dist": "npx hardhat flatten ./contracts/Vesting.sol > ./flat/Vesting.Full.sol",
+    "prettify": "npx prettier --write 'contracts/**/*.sol'"
   },
   "license": "MIT"
 }

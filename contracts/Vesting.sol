@@ -37,7 +37,7 @@ contract Vesting is IVesting, Ownable, ReentrancyGuard {
         Lock[] locks;
     }
 
-    mapping (address => Balance) private _balances;
+    mapping(address => Balance) private _balances;
 
     event TokensVested(address indexed _to, uint256 _amount);
     event TokensClaimed(address indexed _beneficiary, uint256 _amount);
@@ -50,14 +50,11 @@ contract Vesting is IVesting, Ownable, ReentrancyGuard {
     /**
      * @dev Returns {_participant} vesting plan by {_index}.
      */
-    function getLocks(address _participant, uint _index)
+    function getLocks(address _participant, uint256 _index)
         external
         view
         override
-        returns (
-            uint256[] memory amounts,
-            uint256[] memory unlocks
-        )
+        returns (uint256[] memory amounts, uint256[] memory unlocks)
     {
         Lock memory _lock = _balances[_participant].locks[_index];
         amounts = _lock.amounts;
@@ -67,7 +64,12 @@ contract Vesting is IVesting, Ownable, ReentrancyGuard {
     /**
      * @dev Returns amount of vesting plans by {_participant} address.
      */
-    function getLocksLength(address _participant) external view override returns (uint256) {
+    function getLocksLength(address _participant)
+        external
+        view
+        override
+        returns (uint256)
+    {
         return _balances[_participant].locks.length;
     }
 
@@ -80,7 +82,10 @@ contract Vesting is IVesting, Ownable, ReentrancyGuard {
         override
         returns (uint256)
     {
-        require(_balances[_participant].locks.length > _lockIndex, "Index not exist");
+        require(
+            _balances[_participant].locks.length > _lockIndex,
+            "Index not exist"
+        );
 
         return _balances[_participant].locks[_lockIndex].amounts.length;
     }
@@ -88,27 +93,26 @@ contract Vesting is IVesting, Ownable, ReentrancyGuard {
     /**
      * @dev Locking {_amounts} with {_unlockAt} date for specific {_account}.
      */
-    function lock(address _account, uint256[] memory _unlockAt, uint256[] memory _amounts)
-        external
-        override
-        onlyOwner
-        returns (uint256 totalAmount)
-    {
+    function lock(
+        address _account,
+        uint256[] memory _unlockAt,
+        uint256[] memory _amounts
+    ) external override onlyOwner returns (uint256 totalAmount) {
         require(_account != address(0), "Zero address");
         require(
             _unlockAt.length == _amounts.length &&
-            _unlockAt.length <= MAX_LOCK_LENGTH,
+                _unlockAt.length <= MAX_LOCK_LENGTH,
             "Wrong array length"
         );
         require(_unlockAt.length != 0, "Zero array length");
 
-        for (uint i = 0; i < _unlockAt.length; i++) {
+        for (uint256 i = 0; i < _unlockAt.length; i++) {
             if (i == 0) {
                 require(_unlockAt[0] >= startAt, "Early unlock");
             }
 
             if (i > 0) {
-                if (_unlockAt[i-1] >= _unlockAt[i]) {
+                if (_unlockAt[i - 1] >= _unlockAt[i]) {
                     require(false, "Timeline violation");
                 }
             }
@@ -118,15 +122,12 @@ contract Vesting is IVesting, Ownable, ReentrancyGuard {
 
         token.safeTransferFrom(msg.sender, address(this), totalAmount);
 
-        _balances[_account].locks.push(Lock({
-            amounts: _amounts,
-            unlockAt: _unlockAt,
-            released: 0
-        }));
+        _balances[_account].locks.push(
+            Lock({amounts: _amounts, unlockAt: _unlockAt, released: 0})
+        );
 
         emit TokensVested(_account, totalAmount);
     }
-
 
     /**
      * @dev Same as {Vesting.lock}, but in the batches.
@@ -141,16 +142,15 @@ contract Vesting is IVesting, Ownable, ReentrancyGuard {
         require(inputsLen != 0, "Empty input data");
 
         uint256 lockLen;
-        uint i;
-        uint ii;
+        uint256 i;
+        uint256 ii;
         for (i; i < inputsLen; i++) {
             if (_input[i].account == address(0)) {
                 require(false, "Zero address");
             }
 
             if (
-                _input[i].amounts.length == 0 ||
-                _input[i].unlockAt.length == 0
+                _input[i].amounts.length == 0 || _input[i].unlockAt.length == 0
             ) {
                 require(false, "Zero array length");
             }
@@ -169,7 +169,7 @@ contract Vesting is IVesting, Ownable, ReentrancyGuard {
                 }
 
                 if (ii > 0) {
-                    if (_input[i].unlockAt[ii-1] >= _input[i].unlockAt[ii]) {
+                    if (_input[i].unlockAt[ii - 1] >= _input[i].unlockAt[ii]) {
                         require(false, "Timeline violation");
                     }
                 }
@@ -182,16 +182,18 @@ contract Vesting is IVesting, Ownable, ReentrancyGuard {
 
         token.safeTransferFrom(msg.sender, address(this), totalAmount);
 
-        uint amount;
-        uint l;
+        uint256 amount;
+        uint256 l;
 
         i = 0;
         for (i; i < inputsLen; i++) {
-            _balances[_input[i].account].locks.push(Lock({
-                amounts: _input[i].amounts,
-                unlockAt: _input[i].unlockAt,
-                released: 0
-            }));
+            _balances[_input[i].account].locks.push(
+                Lock({
+                    amounts: _input[i].amounts,
+                    unlockAt: _input[i].unlockAt,
+                    released: 0
+                })
+            );
 
             l = _input[i].amounts.length;
             ii = 0;
@@ -220,8 +222,8 @@ contract Vesting is IVesting, Ownable, ReentrancyGuard {
         returns (uint256 timestamp)
     {
         uint256 locksLen = _balances[_participant].locks.length;
-        uint currentUnlock;
-        uint i;
+        uint256 currentUnlock;
+        uint256 i;
         for (i; i < locksLen; i++) {
             currentUnlock = _getNextUnlock(_participant, i);
             if (currentUnlock != 0) {
@@ -255,54 +257,69 @@ contract Vesting is IVesting, Ownable, ReentrancyGuard {
     /**
      * @dev Returns total pending reward by {_participant} address.
      */
-    function pendingReward(address _participant) external view override returns (uint256 reward) {
-        reward = _pendingReward(_participant, 0, _balances[_participant].locks.length);
-    }
-
-    /**
-     * @dev Returns pending reward by {_participant} address in range.
-     */
-    function pendingRewardInRange(address _participant, uint256 _from, uint256 _to)
+    function pendingReward(address _participant)
         external
         view
         override
         returns (uint256 reward)
     {
+        reward = _pendingReward(
+            _participant,
+            0,
+            _balances[_participant].locks.length
+        );
+    }
+
+    /**
+     * @dev Returns pending reward by {_participant} address in range.
+     */
+    function pendingRewardInRange(
+        address _participant,
+        uint256 _from,
+        uint256 _to
+    ) external view override returns (uint256 reward) {
         reward = _pendingReward(_participant, _from, _to);
     }
 
     /**
      * @dev Claim available reward.
      */
-    function claim(address _participant) external override nonReentrant returns (uint256 claimed) {
+    function claim(address _participant)
+        external
+        override
+        nonReentrant
+        returns (uint256 claimed)
+    {
         claimed = _claim(_participant, 0, _balances[_participant].locks.length);
     }
 
     /**
      * @dev Claim available reward in range.
      */
-    function claimInRange(address _participant, uint256 _from, uint256 _to)
-        external
-        override
-        nonReentrant
-        returns (uint256 claimed)
-    {
+    function claimInRange(
+        address _participant,
+        uint256 _from,
+        uint256 _to
+    ) external override nonReentrant returns (uint256 claimed) {
         claimed = _claim(_participant, _from, _to);
     }
 
-    function _pendingReward(address _participant, uint256 _from, uint256 _to)
-        internal
-        view
-        returns (uint256 reward)
-    {
-        uint amount;
-        uint released;
-        uint i = _from;
-        uint ii;
+    function _pendingReward(
+        address _participant,
+        uint256 _from,
+        uint256 _to
+    ) internal view returns (uint256 reward) {
+        uint256 amount;
+        uint256 released;
+        uint256 i = _from;
+        uint256 ii;
         for (i; i < _to; i++) {
-            uint len = _balances[_participant].locks[i].amounts.length;
+            uint256 len = _balances[_participant].locks[i].amounts.length;
             for (ii; ii < len; ii++) {
-                if (block.timestamp >= _balances[_participant].locks[i].unlockAt[ii]) {
+                if (
+                    block.timestamp >=
+                    _balances[_participant].locks[i].unlockAt[ii]
+                ) {
                     amount += _balances[_participant].locks[i].amounts[ii];
                 }
             }
@@ -316,26 +333,33 @@ contract Vesting is IVesting, Ownable, ReentrancyGuard {
         }
     }
 
-    function _claim(address _participant, uint256 _from, uint256 _to)
-        internal
-        returns (uint256 claimed)
-    {
-        uint amount;
-        uint released;
-        uint i = _from;
-        uint ii;
+    function _claim(
+        address _participant,
+        uint256 _from,
+        uint256 _to
+    ) internal returns (uint256 claimed) {
+        uint256 amount;
+        uint256 released;
+        uint256 i = _from;
+        uint256 ii;
         for (i; i < _to; i++) {
-            uint toRelease;
-            uint len = _balances[_participant].locks[i].amounts.length;
+            uint256 toRelease;
+            uint256 len = _balances[_participant].locks[i].amounts.length;
             for (ii; ii < len; ii++) {
-                if (block.timestamp >= _balances[_participant].locks[i].unlockAt[ii]) {
+                if (
+                    block.timestamp >=
+                    _balances[_participant].locks[i].unlockAt[ii]
+                ) {
                     amount += _balances[_participant].locks[i].amounts[ii];
                     toRelease += _balances[_participant].locks[i].amounts[ii];
                 }
             }
 
             released += _balances[_participant].locks[i].released;
-            if (toRelease > 0 && _balances[_participant].locks[i].released < toRelease) {
+            if (
+                toRelease > 0 &&
+                _balances[_participant].locks[i].released < toRelease
+            ) {
                 _balances[_participant].locks[i].released = toRelease;
             }
 
@@ -359,7 +383,7 @@ contract Vesting is IVesting, Ownable, ReentrancyGuard {
     {
         Lock memory _lock = _balances[_participant].locks[_lockIndex];
         uint256 lockLen = _lock.unlockAt.length;
-        uint i;
+        uint256 i;
         for (i; i < lockLen; i++) {
             if (block.timestamp < _lock.unlockAt[i]) {
                 timestamp = _lock.unlockAt[i];
