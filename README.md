@@ -1,6 +1,15 @@
 # catharsis-vesting
 Vesting contract for blocking the platform token for bountists and partners
 
+## About
+
+Vesting contract with batch lock and claim possibility, support only target token, 
+user can claim and get actual reward data in range dependant on selected lock index.
+
+- Multiply account set lock possibility;
+- Unlock in range;
+- Getters for next unlock time and pending unlock amount.
+
 ## Audit
 
 From Quillhash  
